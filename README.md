@@ -7,7 +7,7 @@ When riding rockets, the player is teleported a short distance to make it appear
 ```cs
 MonoSingleton<NewMovement>.Instance.transform.position = base.transform.position + base.transform.up * 2f + base.transform.forward;
 ```
-Here is one example of the decompiled code controlling rockets, and here it's teleporting the player to a position relative to the rocket, meaning that if the player mounts the rocket, theyd be placed above the rocket slightly, with only a few checks for if its possible, especially since rockets can be embedded in walls, or in non-convex geometry, leading to these checks being nearly useless.
+Here is one example of the decompiled code controlling rockets, and here it's teleporting the player to a position relative to the rocket, meaning that if the player mounts the rocket, theyd be placed above the rocket slightly, with only a few checks for if its possible, especially since rockets can be embedded in walls, or in non-convex geometry, leading to these checks being nearly useless. <br>
 The changes this mod makes however reverses the logic, for only 1 frame when mounting the rocket and snaps the rocket to the player rather than the other way round, while preserving the rocket's rotation too.
 ```cs
 base.transform.position = MonoSingleton<NewMovement>.Instance.transform.position - base.transform.forward - base.transform.up * 2f;
@@ -15,5 +15,5 @@ base.transform.position = MonoSingleton<NewMovement>.Instance.transform.position
 With the testing me and some other speedrunners have made so far, this completely removes any and all rocket clips, and trigger skips too, now that theres no way the player can teleport without cheats.
 
 ## Notes
-Please report to the [issues page](https://github.com/10-days-till-xmas/RocketPatcher/issues) if you find anywhere or any setup that allows for rocket clips, or if you find any bugs.
+Please report to the [issues page](https://github.com/10-days-till-xmas/RocketPatcher/issues) if you find anywhere or any setup that allows for rocket clips, or if you find any bugs.<br>
 Thanks to Debatable for sharing with me their findings and theories, and to anyone who playtests this mod.
