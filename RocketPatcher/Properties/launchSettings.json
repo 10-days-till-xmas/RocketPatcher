@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Ultrakill": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Users\\10_days_till_xmas\\Documents\\coding\\C#\\UltraModding\\ultrakill+bepinex\\ULTRAKILL.exe"
+    }
+  }
+}
