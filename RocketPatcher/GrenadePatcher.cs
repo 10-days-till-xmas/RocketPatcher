@@ -13,13 +13,15 @@ namespace RocketPatcher
     [HarmonyPatch(typeof(Grenade))]
     internal class GrenadePatcher
     {
-        private static bool wasRocketRideStartedThisFrame = false;
+        private const float timeToAlign = 1f;
+        private static float timeSpentAligning = 0f;
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(Grenade), nameof(Grenade.PlayerRideStart))]
         static void WasRocketStartedThisFrame()
         {
-            wasRocketRideStartedThisFrame = true;
+            timeSpentAligning = 0f;
+
         }
 
 
@@ -32,12 +34,6 @@ namespace RocketPatcher
                 return false;
             }
 
-            if (!wasRocketRideStartedThisFrame)
-            {
-                return true;
-            }
-            wasRocketRideStartedThisFrame = false;
-
             if (Vector3.Distance(__instance.transform.position, MonoSingleton<NewMovement>.Instance.transform.position) > 5f + __instance.rb.velocity.magnitude * Time.deltaTime)
             {
                 __instance.PlayerRideEnd();
@@ -45,28 +41,40 @@ namespace RocketPatcher
             }
 
             Vector2 rocketControlInput = MonoSingleton<InputManager>.Instance.InputSource.Move.ReadValue<Vector2>(); 
-            __instance.transform.Rotate(rocketControlInput.y * Time.deltaTime * 165f, rocketControlInput.x * Time.deltaTime * 165f, 0f, Space.Self); 
+            __instance.transform.Rotate(rocketControlInput.y * Time.deltaTime * 165f, rocketControlInput.x * Time.deltaTime * 165f, 0f, Space.Self);
+            Vector3 expectedRocketPos;
             if (Physics.Raycast(__instance.transform.position + __instance.transform.forward, __instance.transform.up, 4f, LayerMaskDefaults.Get(LMD.Environment)))
             {
                 if (Physics.Raycast(__instance.transform.position + __instance.transform.forward, Vector3.up, out var hitInfo, 2f, LayerMaskDefaults.Get(LMD.Environment)))
                 {
                     // MonoSingleton<NewMovement>.Instance.transform.position = __instance.transform.position + __instance.transform.forward - Vector3.up * hitInfo.distance;
-                    __instance.transform.position = MonoSingleton<NewMovement>.Instance.transform.position + (Vector3.up * hitInfo.distance) - __instance.transform.forward;
+                    expectedRocketPos = MonoSingleton<NewMovement>.Instance.transform.position + (Vector3.up * hitInfo.distance) - __instance.transform.forward;
                 }
                 else
                 {
                     // MonoSingleton<NewMovement>.Instance.transform.position = __instance.transform.position + __instance.transform.forward;
-                    __instance.transform.position = MonoSingleton<NewMovement>.Instance.transform.position - __instance.transform.forward;
+                    expectedRocketPos = MonoSingleton<NewMovement>.Instance.transform.position - __instance.transform.forward;
                 }
             }
             else
             {
                 // MonoSingleton<NewMovement>.Instance.transform.position = __instance.transform.position + __instance.transform.up * 2f + __instance.transform.forward;
-                __instance.transform.position= MonoSingleton<NewMovement>.Instance.transform.position - (__instance.transform.forward + __instance.transform.up * 2f);
+                expectedRocketPos = MonoSingleton<NewMovement>.Instance.transform.position - (__instance.transform.forward + __instance.transform.up * 2f);
             }
-
+            AlignRocket(__instance, expectedRocketPos);
             MonoSingleton<CameraController>.Instance.CameraShake(0.1f);
             return false;
+        }
+
+        static private void AlignRocket(Grenade __instance, Vector3 expectedRocketPos)
+        {
+            if (!__instance.frozen)
+            {
+                Vector3 newRocketPos = Vector3.Lerp(__instance.transform.position, expectedRocketPos, timeSpentAligning / timeToAlign);
+                timeSpentAligning += Time.deltaTime;
+                Mathf.Clamp(timeSpentAligning, 0f, timeToAlign);
+                __instance.transform.position = newRocketPos;
+            }
         }
     }
 }
