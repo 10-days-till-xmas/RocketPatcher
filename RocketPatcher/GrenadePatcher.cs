@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading;
-using HarmonyLib;
-using MonoMod.RuntimeDetour;
-using ULTRAKILL.Cheats;
+﻿using HarmonyLib;
 using UnityEngine;
 
 namespace RocketPatcher
@@ -41,7 +34,7 @@ namespace RocketPatcher
                 return false;
             }
 
-            Vector2 rocketControlInput = MonoSingleton<InputManager>.Instance.InputSource.Move.ReadValue<Vector2>(); 
+            Vector2 rocketControlInput = MonoSingleton<InputManager>.Instance.InputSource.Move.ReadValue<Vector2>();
             __instance.transform.Rotate(rocketControlInput.y * Time.deltaTime * 165f, rocketControlInput.x * Time.deltaTime * 165f, 0f, Space.Self);
 
             Vector3 expectedPlayerPos;
@@ -74,8 +67,8 @@ namespace RocketPatcher
             }
 
             if (timeSpentAligning == 0f)
-            { 
-                MonoSingleton<NewMovement>.Instance.transform.position = __instance.transform.position + playerPosSavedRelative; 
+            {
+                MonoSingleton<NewMovement>.Instance.transform.position = __instance.transform.position + playerPosSavedRelative;
             }
             else
             {

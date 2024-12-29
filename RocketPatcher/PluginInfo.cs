@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace RocketPatcher
+﻿namespace RocketPatcher
 {
     internal class PluginInfo
     {
