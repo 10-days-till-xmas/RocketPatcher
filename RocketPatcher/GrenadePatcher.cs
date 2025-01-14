@@ -9,13 +9,16 @@ namespace RocketPatcher
         private const float timeToAlign = 1f;
         private static float timeSpentAligning = 0f;
         private static Vector3 playerPosSavedRelative;
+        private static Vector3 CurrentPlayerPos { 
+            get => MonoSingleton<NewMovement>.Instance.transform.position; 
+            set => MonoSingleton<NewMovement>.Instance.transform.position = value; } 
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(Grenade), nameof(Grenade.PlayerRideStart))]
         static void WasRocketStartedThisFrame(Grenade __instance)
         {
             timeSpentAligning = 0f;
-            playerPosSavedRelative = MonoSingleton<NewMovement>.Instance.transform.position - __instance.transform.position;
+            playerPosSavedRelative = CurrentPlayerPos - __instance.transform.position;
         }
 
 
@@ -28,7 +31,7 @@ namespace RocketPatcher
                 return false;
             }
 
-            if (Vector3.Distance(__instance.transform.position, MonoSingleton<NewMovement>.Instance.transform.position) > 5f + __instance.rb.velocity.magnitude * Time.deltaTime)
+            if (Vector3.Distance(__instance.transform.position, CurrentPlayerPos) > 5f + __instance.rb.velocity.magnitude * Time.deltaTime)
             {
                 __instance.PlayerRideEnd();
                 return false;
@@ -66,14 +69,13 @@ namespace RocketPatcher
                 Mathf.Clamp(timeSpentAligning, 0f, timeToAlign);
             }
 
-            if (timeSpentAligning == 0f)
+            if (timeSpentAligning == 0f) // fixes weird sinking behaviour
             {
-                MonoSingleton<NewMovement>.Instance.transform.position = __instance.transform.position + playerPosSavedRelative;
+                CurrentPlayerPos = __instance.transform.position + playerPosSavedRelative;
             }
             else
             {
-                Vector3 newPlayerPos = Vector3.Lerp(MonoSingleton<NewMovement>.Instance.transform.position, expectedPlayerPos, timeSpentAligning / timeToAlign);
-                MonoSingleton<NewMovement>.Instance.transform.position = newPlayerPos;
+                CurrentPlayerPos = Vector3.Lerp(CurrentPlayerPos, expectedPlayerPos, timeSpentAligning / timeToAlign);
             }
         }
     }
