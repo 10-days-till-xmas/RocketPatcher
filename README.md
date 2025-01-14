@@ -13,11 +13,11 @@ The changes this mod makes however modifies the logic, gradually aligning the pl
 expectedPlayerPos = base.transform.position + base.transform.up * 2f + base.transform.forward;
 CurrentPlayerPos = Vector3.Lerp(CurrentPlayerPos, expectedPlayerPos, timeSpentAligning / timeToAlign);
 ```
-With the testing me and some other speedrunners have made so far, this completely removes any and all rocket clips, and trigger skips too, now that theres no way the player can teleport without cheats.
-(Except for some untagged wall clips but I can't fix those it seems)
+With the testing me and some other speedrunners have made so far, this completely removes any and all rocket clips (Except for some untagged wall clips but I can't fix those it seems), and trigger skips too, now that theres no way the player can teleport without cheats (other than dismounting, but that shouldn't have any related clips)
+
 
 <details>
-  <summary>Some clips from playtesting</summary>
+  <summary>Some videos from playtesting</summary>
   
   https://github.com/user-attachments/assets/448e3078-9b8e-4711-8a7d-2b34bbe5fb90
   
