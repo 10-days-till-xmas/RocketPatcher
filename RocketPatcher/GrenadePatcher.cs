@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using System.Diagnostics;
 using UnityEngine;
 
 namespace RocketPatcher
@@ -7,9 +6,11 @@ namespace RocketPatcher
     [HarmonyPatch(typeof(Grenade))]
     internal class GrenadePatcher
     {
-        private static Vector3 CurrentPlayerPos { 
-            get => MonoSingleton<NewMovement>.Instance.transform.position; 
-            set => MonoSingleton<NewMovement>.Instance.transform.position = value; } 
+        private static Vector3 CurrentPlayerPos
+        {
+            get => MonoSingleton<NewMovement>.Instance.transform.position;
+            set => MonoSingleton<NewMovement>.Instance.transform.position = value;
+        }
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(Grenade), nameof(Grenade.LateUpdate))]
@@ -64,7 +65,7 @@ namespace RocketPatcher
             }
 
             CurrentPlayerPos = expectedPlayerPos;
-            
+
             MonoSingleton<CameraController>.Instance.CameraShake(0.1f);
             return false;
         }
@@ -74,14 +75,14 @@ namespace RocketPatcher
             CapsuleCollider playerCapsule = MonoSingleton<NewMovement>.Instance.playerCollider;
             Vector3 playerHeadLocal = Vector3.up * (playerCapsule.height / 2 - playerCapsule.radius);
             Vector3 playerFootLocal = Vector3.down * (playerCapsule.height / 2 - playerCapsule.radius);
-            bool hit =  Physics.CapsuleCast(
-                CurrentPlayerPos + playerHeadLocal, 
-                CurrentPlayerPos + playerFootLocal, 
+            bool hit = Physics.CapsuleCast(
+                CurrentPlayerPos + playerHeadLocal,
+                CurrentPlayerPos + playerFootLocal,
                 playerCapsule.radius,
                 (expectedPlayerPos - CurrentPlayerPos).normalized,
                 out RaycastHit hitInfo,
                 (expectedPlayerPos - CurrentPlayerPos).magnitude, LayerMaskDefaults.Get(LMD.Environment));
-            collision = hitInfo.collider ?? null;
+            collision = hitInfo.collider;
             return hit;
         }
     }

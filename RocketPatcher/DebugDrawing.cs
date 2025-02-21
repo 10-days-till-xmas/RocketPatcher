@@ -1,5 +1,4 @@
-﻿using ULTRAKILL.Cheats;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace RocketPatcher
 {
@@ -16,7 +15,7 @@ namespace RocketPatcher
             Object.Destroy(pointObj, duration);
         }
 
-        public static void DrawLine(Vector3 start, Vector3 end, Color color, float duration = 1.0f) 
+        public static void DrawLine(Vector3 start, Vector3 end, Color color, float duration = 1.0f)
         {
             GameObject lineObj = new("DebugLine");
             LineRenderer lr = lineObj.AddComponent<LineRenderer>();
@@ -61,20 +60,20 @@ namespace RocketPatcher
         {
             DrawCylinder(position, height - radius * 2, radius, color, duration);
             GameObject topSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                topSphere.transform.position = position + new Vector3(0, height / 2 - radius, 0);
-                topSphere.transform.localScale = new Vector3(radius * 2, radius * 2, radius * 2);
-                topSphere.GetComponent<Renderer>().material.color = color;
-                Object.Destroy(topSphere.GetComponent<Collider>());
-                topSphere.GetComponent<Renderer>().material.color = color;
-                Object.Destroy(topSphere, duration);
+            topSphere.transform.position = position + new Vector3(0, height / 2 - radius, 0);
+            topSphere.transform.localScale = new Vector3(radius * 2, radius * 2, radius * 2);
+            topSphere.GetComponent<Renderer>().material.color = color;
+            Object.Destroy(topSphere.GetComponent<Collider>());
+            topSphere.GetComponent<Renderer>().material.color = color;
+            Object.Destroy(topSphere, duration);
 
             GameObject bottomSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                bottomSphere.transform.position = position - new Vector3(0, height / 2 - radius, 0);
-                bottomSphere.transform.localScale = new Vector3(radius * 2, radius * 2, radius * 2);
-                bottomSphere.GetComponent<Renderer>().material.color = color;
-                Object.Destroy(bottomSphere.GetComponent<Collider>());
-                bottomSphere.GetComponent<Renderer>().material.color = color;
-                Object.Destroy(bottomSphere, duration);
+            bottomSphere.transform.position = position - new Vector3(0, height / 2 - radius, 0);
+            bottomSphere.transform.localScale = new Vector3(radius * 2, radius * 2, radius * 2);
+            bottomSphere.GetComponent<Renderer>().material.color = color;
+            Object.Destroy(bottomSphere.GetComponent<Collider>());
+            bottomSphere.GetComponent<Renderer>().material.color = color;
+            Object.Destroy(bottomSphere, duration);
         }
 
         public static void DrawCapsule(Vector3 start, Vector3 end, float radius, Color color, float duration = 10f)
