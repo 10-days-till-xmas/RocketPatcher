@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace RocketPatcher
@@ -6,21 +7,9 @@ namespace RocketPatcher
     [HarmonyPatch(typeof(Grenade))]
     internal class GrenadePatcher
     {
-        private const float timeToAlign = 1f;
-        private static float timeSpentAligning = 0f;
-        private static Vector3 playerPosSavedRelative;
         private static Vector3 CurrentPlayerPos { 
             get => MonoSingleton<NewMovement>.Instance.transform.position; 
             set => MonoSingleton<NewMovement>.Instance.transform.position = value; } 
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(Grenade), nameof(Grenade.PlayerRideStart))]
-        static void WasRocketStartedThisFrame(Grenade __instance)
-        {
-            timeSpentAligning = 0f;
-            playerPosSavedRelative = CurrentPlayerPos - __instance.transform.position;
-        }
-
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(Grenade), nameof(Grenade.LateUpdate))]
@@ -56,27 +45,44 @@ namespace RocketPatcher
             {
                 expectedPlayerPos = __instance.transform.position + __instance.transform.up * 2f + __instance.transform.forward;
             }
-            AlignPlayer(__instance, expectedPlayerPos);
+
+            if (CapsuleCastCheck(expectedPlayerPos, out Collider collision))
+            {
+                __instance.PlayerRideEnd();
+                __instance.Collision(collision);
+                Plugin.Logger.LogInfo("Invalid rocket ride");
+# if DEBUG // Debug drawing
+                var playerCapsule = MonoSingleton<NewMovement>.Instance.playerCollider;
+                DebugDrawing.DrawCapsule(CurrentPlayerPos, playerCapsule.height, playerCapsule.radius, Color.blue);
+                Vector3 playerHeadLocal = Vector3.up * (playerCapsule.height / 2 - playerCapsule.radius);
+                Vector3 playerFootLocal = Vector3.down * (playerCapsule.height / 2 - playerCapsule.radius);
+                DebugDrawing.DrawCapsule(expectedPlayerPos, playerCapsule.height, playerCapsule.radius, Color.red);
+                DebugDrawing.DrawCapsule(playerHeadLocal + CurrentPlayerPos, expectedPlayerPos + playerHeadLocal, playerCapsule.radius, Color.gray);
+                DebugDrawing.DrawCapsule(playerFootLocal + CurrentPlayerPos, expectedPlayerPos + playerFootLocal, playerCapsule.radius, Color.gray);
+#endif
+                return false;
+            }
+
+            CurrentPlayerPos = expectedPlayerPos;
+            
             MonoSingleton<CameraController>.Instance.CameraShake(0.1f);
             return false;
         }
 
-        private static void AlignPlayer(Grenade __instance, Vector3 expectedPlayerPos)
+        private static bool CapsuleCastCheck(Vector3 expectedPlayerPos, out Collider collision)
         {
-            if (!__instance.frozen)
-            {
-                timeSpentAligning += Time.deltaTime;
-                Mathf.Clamp(timeSpentAligning, 0f, timeToAlign);
-            }
-
-            if (timeSpentAligning == 0f) // fixes weird sinking behaviour
-            {
-                CurrentPlayerPos = __instance.transform.position + playerPosSavedRelative;
-            }
-            else
-            {
-                CurrentPlayerPos = Vector3.Lerp(CurrentPlayerPos, expectedPlayerPos, timeSpentAligning / timeToAlign);
-            }
+            CapsuleCollider playerCapsule = MonoSingleton<NewMovement>.Instance.playerCollider;
+            Vector3 playerHeadLocal = Vector3.up * (playerCapsule.height / 2 - playerCapsule.radius);
+            Vector3 playerFootLocal = Vector3.down * (playerCapsule.height / 2 - playerCapsule.radius);
+            bool hit =  Physics.CapsuleCast(
+                CurrentPlayerPos + playerHeadLocal, 
+                CurrentPlayerPos + playerFootLocal, 
+                playerCapsule.radius,
+                (expectedPlayerPos - CurrentPlayerPos).normalized,
+                out RaycastHit hitInfo,
+                (expectedPlayerPos - CurrentPlayerPos).magnitude, LayerMaskDefaults.Get(LMD.Environment));
+            collision = hitInfo.collider ?? null;
+            return hit;
         }
     }
 }
