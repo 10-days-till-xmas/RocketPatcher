@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace RocketPatcher
@@ -45,12 +46,12 @@ namespace RocketPatcher
                 expectedPlayerPos = __instance.transform.position + __instance.transform.up * 2f + __instance.transform.forward;
             }
 
-            if (CapsuleOverlapChecks(expectedPlayerPos, out Collider collision))
+            if (CapsuleCastCheck(expectedPlayerPos, out Collider collision))
             {
                 __instance.PlayerRideEnd();
                 __instance.Collision(collision);
                 Plugin.Logger.LogInfo("Invalid rocket ride");
-# if DEBUG
+# if DEBUG // Debug drawing
                 var playerCapsule = MonoSingleton<NewMovement>.Instance.playerCollider;
                 DebugDrawing.DrawCapsule(CurrentPlayerPos, playerCapsule.height, playerCapsule.radius, Color.blue);
                 Vector3 playerHeadLocal = Vector3.up * (playerCapsule.height / 2 - playerCapsule.radius);
@@ -68,27 +69,20 @@ namespace RocketPatcher
             return false;
         }
 
-        private static bool CapsuleOverlapChecks(Vector3 expectedPlayerPos, out Collider collision)
+        private static bool CapsuleCastCheck(Vector3 expectedPlayerPos, out Collider collision)
         {
-            // generate 3 new capsules to check collision
-
             CapsuleCollider playerCapsule = MonoSingleton<NewMovement>.Instance.playerCollider;
             Vector3 playerHeadLocal = Vector3.up * (playerCapsule.height / 2 - playerCapsule.radius);
             Vector3 playerFootLocal = Vector3.down * (playerCapsule.height / 2 - playerCapsule.radius);
-
-            Collider[] CollidedObjects = new Collider[1];
-
-            if (Physics.OverlapCapsuleNonAlloc(CurrentPlayerPos + playerHeadLocal, expectedPlayerPos + playerHeadLocal, playerCapsule.radius, CollidedObjects, LayerMaskDefaults.Get(LMD.Environment)) > 0 ||
-                Physics.OverlapCapsuleNonAlloc(CurrentPlayerPos + playerFootLocal, expectedPlayerPos + playerFootLocal, playerCapsule.radius, CollidedObjects, LayerMaskDefaults.Get(LMD.Environment)) > 0 ||
-                Physics.OverlapCapsuleNonAlloc(expectedPlayerPos + playerHeadLocal, expectedPlayerPos + playerFootLocal, playerCapsule.radius, CollidedObjects, LayerMaskDefaults.Get(LMD.Environment)) > 0
-                )
-            {
-                collision = CollidedObjects[0];
-                return true;
-            }
-
-            collision = null;
-            return false;
+            bool hit =  Physics.CapsuleCast(
+                CurrentPlayerPos + playerHeadLocal, 
+                CurrentPlayerPos + playerFootLocal, 
+                playerCapsule.radius,
+                (expectedPlayerPos - CurrentPlayerPos).normalized,
+                out RaycastHit hitInfo,
+                (expectedPlayerPos - CurrentPlayerPos).magnitude, LayerMaskDefaults.Get(LMD.Environment));
+            collision = hitInfo.collider ?? null;
+            return hit;
         }
     }
 }
