@@ -6,21 +6,9 @@ namespace RocketPatcher
     [HarmonyPatch(typeof(Grenade))]
     internal class GrenadePatcher
     {
-        private const float timeToAlign = 1f;
-        private static float timeSpentAligning = 0f;
-        private static Vector3 playerPosSavedRelative;
         private static Vector3 CurrentPlayerPos { 
             get => MonoSingleton<NewMovement>.Instance.transform.position; 
             set => MonoSingleton<NewMovement>.Instance.transform.position = value; } 
-
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(Grenade), nameof(Grenade.PlayerRideStart))]
-        static void WasRocketStartedThisFrame(Grenade __instance)
-        {
-            timeSpentAligning = 0f;
-            playerPosSavedRelative = CurrentPlayerPos - __instance.transform.position;
-        }
-
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(Grenade), nameof(Grenade.LateUpdate))]
@@ -56,27 +44,51 @@ namespace RocketPatcher
             {
                 expectedPlayerPos = __instance.transform.position + __instance.transform.up * 2f + __instance.transform.forward;
             }
-            AlignPlayer(__instance, expectedPlayerPos);
+
+            if (CapsuleOverlapChecks(expectedPlayerPos, out Collider collision))
+            {
+                __instance.PlayerRideEnd();
+                __instance.Collision(collision);
+                Plugin.Logger.LogInfo("Invalid rocket ride");
+# if DEBUG
+                var playerCapsule = MonoSingleton<NewMovement>.Instance.playerCollider;
+                DebugDrawing.DrawCapsule(CurrentPlayerPos, playerCapsule.height, playerCapsule.radius, Color.blue);
+                Vector3 playerHeadLocal = Vector3.up * (playerCapsule.height / 2 - playerCapsule.radius);
+                Vector3 playerFootLocal = Vector3.down * (playerCapsule.height / 2 - playerCapsule.radius);
+                DebugDrawing.DrawCapsule(expectedPlayerPos, playerCapsule.height, playerCapsule.radius, Color.red);
+                DebugDrawing.DrawCapsule(playerHeadLocal + CurrentPlayerPos, expectedPlayerPos + playerHeadLocal, playerCapsule.radius, Color.gray);
+                DebugDrawing.DrawCapsule(playerFootLocal + CurrentPlayerPos, expectedPlayerPos + playerFootLocal, playerCapsule.radius, Color.gray);
+#endif
+                return false;
+            }
+
+            CurrentPlayerPos = expectedPlayerPos;
+            
             MonoSingleton<CameraController>.Instance.CameraShake(0.1f);
             return false;
         }
 
-        private static void AlignPlayer(Grenade __instance, Vector3 expectedPlayerPos)
+        private static bool CapsuleOverlapChecks(Vector3 expectedPlayerPos, out Collider collision)
         {
-            if (!__instance.frozen)
+            // generate 3 new capsules to check collision
+
+            CapsuleCollider playerCapsule = MonoSingleton<NewMovement>.Instance.playerCollider;
+            Vector3 playerHeadLocal = Vector3.up * (playerCapsule.height / 2 - playerCapsule.radius);
+            Vector3 playerFootLocal = Vector3.down * (playerCapsule.height / 2 - playerCapsule.radius);
+
+            Collider[] CollidedObjects = new Collider[1];
+
+            if (Physics.OverlapCapsuleNonAlloc(CurrentPlayerPos + playerHeadLocal, expectedPlayerPos + playerHeadLocal, playerCapsule.radius, CollidedObjects, LayerMaskDefaults.Get(LMD.Environment)) > 0 ||
+                Physics.OverlapCapsuleNonAlloc(CurrentPlayerPos + playerFootLocal, expectedPlayerPos + playerFootLocal, playerCapsule.radius, CollidedObjects, LayerMaskDefaults.Get(LMD.Environment)) > 0 ||
+                Physics.OverlapCapsuleNonAlloc(expectedPlayerPos + playerHeadLocal, expectedPlayerPos + playerFootLocal, playerCapsule.radius, CollidedObjects, LayerMaskDefaults.Get(LMD.Environment)) > 0
+                )
             {
-                timeSpentAligning += Time.deltaTime;
-                Mathf.Clamp(timeSpentAligning, 0f, timeToAlign);
+                collision = CollidedObjects[0];
+                return true;
             }
 
-            if (timeSpentAligning == 0f) // fixes weird sinking behaviour
-            {
-                CurrentPlayerPos = __instance.transform.position + playerPosSavedRelative;
-            }
-            else
-            {
-                CurrentPlayerPos = Vector3.Lerp(CurrentPlayerPos, expectedPlayerPos, timeSpentAligning / timeToAlign);
-            }
+            collision = null;
+            return false;
         }
     }
 }
