@@ -8,22 +8,26 @@ When riding rockets, the player is teleported a short distance to make it appear
 CurrentPlayerPos = base.transform.position + base.transform.up * 2f + base.transform.forward;
 ```
 Here is one example of the decompiled code controlling rockets, and here it's teleporting the player to a position relative to the rocket, meaning that if the player mounts the rocket, theyd be placed above the rocket slightly, with only a few checks for if its possible, especially since rockets can be embedded in walls, or in non-convex geometry, leading to these checks being nearly useless. <br>
-The changes this mod makes however modifies the logic, gradually aligning the player with the rocket as they fly. (With some interesting effects too, which can be updated if desired)
+The mod however adds an extra check, by casting a capsule across through to where the player is expected to be, resulting in normal rocket behaviour, but with (most) rocket clips removed!
 ```cs
-expectedPlayerPos = base.transform.position + base.transform.up * 2f + base.transform.forward;
-CurrentPlayerPos = Vector3.Lerp(CurrentPlayerPos, expectedPlayerPos, timeSpentAligning / timeToAlign);
+private static bool CapsuleCastCheck(Vector3 expectedPlayerPos, out Collider collision)
+{
+    CapsuleCollider playerCapsule = MonoSingleton<NewMovement>.Instance.playerCollider;
+    Vector3 playerHeadLocal = Vector3.up * (playerCapsule.height / 2 - playerCapsule.radius);
+    Vector3 playerFootLocal = Vector3.down * (playerCapsule.height / 2 - playerCapsule.radius);
+    bool hit = Physics.CapsuleCast(
+        CurrentPlayerPos + playerHeadLocal,
+        CurrentPlayerPos + playerFootLocal,
+        playerCapsule.radius,
+        (expectedPlayerPos - CurrentPlayerPos).normalized,
+        out RaycastHit hitInfo,
+        (expectedPlayerPos - CurrentPlayerPos).magnitude, LayerMaskDefaults.Get(LMD.Environment));
+    collision = hitInfo.collider;
+    return hit;
+}
 ```
-With the testing me and some other speedrunners have made so far, this completely removes any and all rocket clips (Except for some untagged wall clips but I can't fix those it seems), and trigger skips too, now that theres no way the player can teleport without cheats (other than dismounting, but that shouldn't have any related clips)
-
-
-<details>
-  <summary>Some videos from playtesting</summary>
-  
-  https://github.com/user-attachments/assets/448e3078-9b8e-4711-8a7d-2b34bbe5fb90
-  
-  https://github.com/user-attachments/assets/addb6e8c-01e6-4798-9893-d967961673d6
-</details>
+In theory, this should remove all rocket clips other than untagged walls, and trigger-skips
 
 ## Notes
 Please report to the [issues page](https://github.com/10-days-till-xmas/RocketPatcher/issues) if you find anywhere or any setup that allows for rocket clips, or if you find any bugs.<br>
-Thanks to Debatable for sharing with me their findings and theories, and to anyone who playtests this mod.
+Thanks to Debatable for sharing with me their findings and theories, Heckteck for the advice to use `CapsuleCast()`, and to anyone who playtests this mod.
