@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>RocketPatcher</AssemblyName>
     <Product>Rocket Patcher</Product>
     <Version>1.1.0</Version>
@@ -18,28 +18,20 @@
   <ItemGroup>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
-    <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="UnityEngine.Modules" Version="2019.4.40" IncludeAssets="compile" />
+    <PackageReference Include="UnityEngine.Modules" Version="2022.3.28" IncludeAssets="compile" />
   </ItemGroup>
   
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
-  
+	
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\ultrakill+bepinex\ULTRAKILL_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
   </ItemGroup>
 	
-  <ItemGroup>
-	<Publicize Include="Assembly-CSharp" MemberPattern="^Grenade\..*" />
-  </ItemGroup>
-	
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="IF &quot;$(ConfigurationName)&quot; == &quot;Debug&quot; xcopy /Y &quot;$(ProjectDir)bin\Debug\netstandard2.0\$(AssemblyName).dll&quot; &quot;C:\Users\10_days_till_xmas\Documents\coding\C#\UltraModding\ultrakill+bepinex\BepInEx\plugins&quot;&#xA;     " />
+    <Exec Command="IF &quot;$(ConfigurationName)&quot; == &quot;Debug&quot; xcopy /Y &quot;$(ProjectDir)bin\Debug\netstandard2.1\$(AssemblyName).dll&quot; &quot;C:\Users\10_days_till_xmas\Documents\coding\C#\UltraModding\ultrakill+bepinex\BepInEx\plugins&quot;&#xA;     " />
   </Target>
 </Project>
