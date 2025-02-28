@@ -13,8 +13,9 @@ namespace RocketPatcher
         {
             Logger = base.Logger;
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
-            Harmony.CreateAndPatchAll(typeof(GrenadePatcher), PluginInfo.PLUGIN_GUID);
-            Harmony.CreateAndPatchAll(typeof(ScoreSubmissionPatcher), PluginInfo.PLUGIN_GUID);
+            var harmony = new Harmony(PluginInfo.PLUGIN_GUID);
+            harmony.PatchAll(typeof(GrenadeTranspiler));
+            harmony.PatchAll(typeof(ScoreSubmissionPatcher));
             Logger.LogMessage("I HATE ZOOMIES!!! I HATE ZOOMIES!!! I HATE ZOOMIES!!!");
             Logger.LogMessage("ExecuteAction(delegate(){grim.Explode();});");
         }
